@@ -1,0 +1,22 @@
+---
+import { brand } from "../brand";
+const { title, page = "" } = Astro.props;
+---
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <script is:inline>try { if (JSON.parse(localStorage.getItem("reader-settings") || "{}").large) document.documentElement.classList.add("large-ui"); } catch {}</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#1b1a17" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/site.css" />
+  <title>{title} · {brand}</title>
+  <slot name="head" />
+</head>
+<body class={page}>
+  <slot />
+</body>
+</html>

@@ -1,0 +1,146 @@
+---
+import Shell from "../layouts/Shell.astro";
+export const prerender = true;
+const icons = {
+  prev: "M15 18l-6-6 6-6",
+  next: "M9 18l6-6-6-6",
+  pages: "M4 5h16v14H4zM4 12h16M12 5v14",
+  minus: "M20 20l-4-4M9 12h6M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z",
+  plus: "M20 20l-4-4M9 12h6m-3-3v6M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z",
+  fullscreen: "M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5",
+  exit: "M4 9h5V4m11 5h-5V4M9 20v-5H4m11 5v-5h5",
+  more: "M5 12h.01m7 0h.01m7 0h.01",
+  bookmark: "M6 3h12v18l-6-4.5L6 21z",
+  timer: "M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 1.5M10 2h4",
+};
+---
+<Shell title="Membaca" page="reader-page">
+  <link slot="head" rel="stylesheet" href="/zaya/engine-next/engine.css" />
+  <div id="reader" class="reader">
+    <header id="reader-header" class="reader-header">
+      <a href="/library/" id="back">‹ Rak buku</a>
+      <h1 id="book-title">Membaca</h1>
+    </header>
+    <main class="reader-main">
+      <aside id="page-list" aria-label="Penanda dan halaman" hidden>
+        <h2 class="panel-heading">Penanda</h2>
+        <div id="bookmark-items" class="bookmark-items"></div>
+        <h2 class="panel-heading">Halaman</h2>
+        <div id="thumb-items"></div>
+      </aside>
+      <div id="book" aria-label="Halaman buku"></div>
+      <p id="status" class="reader-status" role="status">Membuka buku…</p>
+      <p id="timer-pill" class="timer-pill" aria-hidden="true" hidden></p>
+    </main>
+    <footer id="reader-tools" class="reader-tools" aria-label="Kontrol membaca">
+      <div class="reader-tool-group">
+        <button id="prev" type="button" aria-label="Halaman sebelumnya" title="Halaman sebelumnya"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.prev} /></svg><span class="tool-label">Mundur</span></button>
+        <form id="jump">
+          <label for="page-number" class="visually-hidden">Ke halaman</label>
+          <input id="page-number" inputmode="numeric" type="number" min="1" value="1" aria-describedby="total" required />
+          <span id="total"></span>
+        </form>
+        <button id="next" type="button" aria-label="Halaman berikutnya" title="Halaman berikutnya"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.next} /></svg><span class="tool-label">Maju</span></button>
+      </div>
+      <div class="reader-tool-group">
+        <button id="thumbs" type="button" aria-label="Penanda dan halaman" title="Penanda dan halaman" aria-controls="page-list" aria-expanded="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.pages} /></svg><span class="tool-label">Daftar</span></button>
+        <button id="bookmark" type="button" aria-label="Tandai halaman ini" title="Tandai halaman ini" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.bookmark} /></svg><span class="tool-label">Tandai</span></button>
+        <button id="zoom-out" type="button" aria-label="Perkecil" title="Perkecil"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.minus} /></svg><span class="tool-label">Kecil</span></button>
+        <button id="zoom-in" type="button" aria-label="Perbesar" title="Perbesar"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.plus} /></svg><span class="tool-label">Besar</span></button>
+      </div>
+      <div class="reader-tool-group">
+        <button id="timer" type="button" aria-label="Timer membaca" title="Timer membaca" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.timer} /></svg><span class="tool-label">Timer</span></button>
+        <button id="fullscreen" type="button" aria-label="Layar penuh" title="Layar penuh" aria-pressed="false">
+          <svg class="enter-icon" aria-hidden="true" viewBox="0 0 24 24"><path d={icons.fullscreen} /></svg>
+          <svg class="exit-icon" aria-hidden="true" viewBox="0 0 24 24"><path d={icons.exit} /></svg>
+          <span class="tool-label">Penuh</span>
+        </button>
+        <details id="reader-options" class="reader-options">
+          <summary aria-label="Pengaturan membaca" title="Pengaturan membaca"><svg aria-hidden="true" viewBox="0 0 24 24"><path d={icons.more} /></svg><span class="tool-label">Atur</span></summary>
+          <div class="reader-options-panel">
+            <label for="mode">Tata letak halaman</label>
+            <select id="mode"><option value="auto">Otomatis</option><option value="single">Satu halaman</option><option value="double">Dua halaman</option></select>
+            <p class="option-heading">Zoom</p>
+            <div class="option-row">
+              <button id="fit-width" type="button">Pas lebar</button>
+              <button id="zoom-reset" type="button">Ukuran awal</button>
+            </div>
+            <label class="option-check"><input id="keep-zoom" type="checkbox" /> Pertahankan zoom saat ganti halaman</label>
+            <p class="option-heading" id="eye-heading">Warna halaman</p>
+            <div class="option-row" role="radiogroup" aria-labelledby="eye-heading">
+              <label class="option-pill"><input type="radio" name="eye" value="normal" /> Normal</label>
+              <label class="option-pill"><input type="radio" name="eye" value="warm" /> Hangat</label>
+              <label class="option-pill"><input type="radio" name="eye" value="night" /> Malam</label>
+            </div>
+            <label for="brightness">Kecerahan halaman</label>
+            <input id="brightness" type="range" min="50" max="100" step="5" />
+            <button id="large-ui" type="button" aria-pressed="false">Teks dan tombol besar</button>
+            <button id="show-hint" type="button">Lihat petunjuk</button>
+            <button id="export" type="button">Unduh PDF</button>
+          </div>
+        </details>
+      </div>
+    </footer>
+    <dialog id="hint-dialog" class="hint-dialog" aria-labelledby="hint-title">
+      <form method="dialog">
+        <h2 id="hint-title">Cara membaca</h2>
+        <div class="hint-zones" aria-hidden="true">
+          <span>‹<br />Ketuk untuk mundur</span>
+          <span>Ketuk untuk menampilkan atau menyembunyikan menu</span>
+          <span>›<br />Ketuk untuk maju</span>
+        </div>
+        <ul class="hint-list">
+          <li>Ketuk sisi <strong>kanan</strong> halaman untuk maju, sisi <strong>kiri</strong> untuk mundur.</li>
+          <li>Ketuk <strong>tengah</strong> halaman untuk menampilkan atau menyembunyikan menu.</li>
+          <li>Cubit dengan dua jari atau ketuk dua kali untuk memperbesar. Zoom tetap terjaga saat ganti halaman.</li>
+          <li>Warna halaman, kecerahan, dan ukuran teks ada di tombol <strong>Atur</strong> (⋯).</li>
+        </ul>
+        <div class="dialog-actions"><button value="ok" class="primary" autofocus>Mengerti</button></div>
+      </form>
+    </dialog>
+    <dialog id="conflict" aria-labelledby="conflict-title" aria-describedby="conflict-message">
+      <form method="dialog">
+        <h2 id="conflict-title">Mau lanjut dari halaman mana?</h2><p id="conflict-message"></p>
+        <div class="dialog-actions"><button value="cloud">Pakai halaman tersimpan</button><button value="local" class="primary">Pakai halaman di perangkat ini</button></div>
+      </form>
+    </dialog>
+    <dialog id="timer-dialog" aria-labelledby="timer-title" aria-describedby="timer-help">
+      <form method="dialog">
+        <h2 id="timer-title">Timer membaca</h2>
+        <p id="timer-help">Timer berjalan selama buku tampil di layar dan berhenti sementara saat Anda membuka aplikasi lain.</p>
+        <div class="timer-presets" role="group" aria-label="Mulai cepat">
+          <button value="15" formnovalidate>15 menit</button><button value="25" formnovalidate>25 menit</button><button value="45" formnovalidate>45 menit</button>
+        </div>
+        <label class="timer-custom">Menit <input id="timer-minutes" type="number" inputmode="numeric" min="1" max="240" value="30" /></label>
+        <div class="dialog-actions">
+          <button value="cancel" formnovalidate>Batal</button>
+          <button id="timer-stop" value="stop" formnovalidate>Hentikan timer</button>
+          <button value="start" class="primary">Mulai</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="timer-done" aria-labelledby="timer-done-title" aria-describedby="timer-done-message">
+      <form method="dialog">
+        <h2 id="timer-done-title">Waktunya istirahat</h2>
+        <p id="timer-done-message"></p>
+        <div class="dialog-actions">
+          <button value="library">Kembali ke rak</button>
+          <button value="extend">Tambah 5 menit</button>
+          <button value="close" class="primary" autofocus>Lanjut membaca</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="bookmark-dialog" aria-labelledby="bookmark-title">
+      <form method="dialog">
+        <h2 id="bookmark-title">Penanda</h2>
+        <label class="bookmark-note">Catatan (boleh dikosongkan) <textarea id="bookmark-note" maxlength="500" rows="3" autofocus placeholder="Bab 3, kalimat yang ingin diingat…"></textarea></label>
+        <div class="dialog-actions">
+          <button id="bookmark-remove" value="remove">Hapus penanda</button>
+          <button value="cancel">Batal</button>
+          <button value="save" class="primary">Simpan</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+  <script is:inline type="module" src="/client/reader.js"></script>
+</Shell>
