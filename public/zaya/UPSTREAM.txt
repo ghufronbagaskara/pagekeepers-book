@@ -1,0 +1,7 @@
+Upstream Zaya 7.5.1, commit 5d080dc5a99327ca56b2bb97afbffbf2bba1de12
+https://github.com/ibra-kdbra/Zaya
+
+This directory contains Zaya's MIT-licensed engine and its PDF.js and three.js
+runtime assets. Each vendor directory includes its upstream license.
+Local changes add sliced File input, single-page motion, an `onTapAt` hook for tap zones,
+and `keepZoom` / `zoomToTop` / `fitWidthLevel` for reading a magnified page on a phone.
