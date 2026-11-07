@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ruang-baca-local",
+  "main": "dist/server/entry.mjs",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./dist/client", "binding": "ASSETS", "html_handling": "force-trailing-slash" },
+  "d1_databases": [{ "binding": "DB", "database_name": "ruang-baca-local", "database_id": "00000000-0000-0000-0000-000000000001" }],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "ruang-baca-local" }],
+  "vars": { "LOCAL_PREVIEW": "1" }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "ruang-baca",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun scripts/build.ts",
+    "check": "bun scripts/check.ts",
+    "dev": "bunx --bun alchemy dev --stage staging",
+    "preview": "bun scripts/preview.ts",
+    "deploy": "bunx --bun alchemy deploy",
+    "catalog": "bun scripts/catalog.ts",
+    "account": "bun scripts/account.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@alchemy.run/cloudflare": "2.0.0-beta.85",
+    "@noble/hashes": "2.0.1",
+    "alchemy": "2.0.0-beta.85",
+    "astro": "^7.4.7",
+    "better-auth": "1.7.15",
+    "effect": "^4.1.2"
+  },
+  "devDependencies": {
+    "@alchemy.run/frontend-frameworks": "2.0.0-beta.85",
+    "@astrojs/check": "^0.9.10",
+    "@cloudflare/workers-types": "^4",
+    "@effect/platform-bun": "^4.1.2",
+    "@effect/platform-node": "^4.1.2",
+    "@types/bun": "^1.4.2",
+    "typescript": "^6",
+    "wrangler": "^4"
+  }
+}

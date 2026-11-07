@@ -1,0 +1,17 @@
+.env*
+!.env.example
+.dev.vars*
+.alchemy/
+.astro/
+.wrangler/
+node_modules/
+dist/
+public/client/
+public/sw.js
+.zaya-source/
+book/
+fliphtml5-downloader*
+*.pdf
+*.pem
+.bun-cache/
+.alchemy-state/

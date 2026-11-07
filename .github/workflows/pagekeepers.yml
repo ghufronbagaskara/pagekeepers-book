@@ -1,0 +1,50 @@
+name: Pagekeepers
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Cloudflare deployment stage
+        type: choice
+        required: true
+        options: [staging, prod]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun test
+      - run: bun run build
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && (inputs.stage == 'staging' || github.ref == 'refs/heads/main')
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.stage }}
+    concurrency:
+      group: pagekeepers-${{ inputs.stage }}
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ALCHEMY_PLAIN: "1"
+      STAGE: ${{ inputs.stage }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - run: bun install --frozen-lockfile
+      - run: bun alchemy provider check-env --provider Cloudflare
+      - run: bun alchemy deploy --stage "$STAGE" --yes
