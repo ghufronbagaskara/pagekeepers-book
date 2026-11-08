@@ -50,12 +50,16 @@ function pageMaterial(back) {
     transparent: false,
   });
   material.userData.shade = { value: 0 };
+  // Local change: how far the page is washed towards white, for the see-through back of a single page.
+  material.userData.ghost = { value: 0 };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uShade = material.userData.shade;
+    shader.uniforms.uGhost = material.userData.ghost;
     shader.fragmentShader = shader.fragmentShader
-      .replace("void main() {", "uniform float uShade;\nvoid main() {")
+      .replace("void main() {", "uniform float uShade;\nuniform float uGhost;\nvoid main() {")
       .replace("#include <map_fragment>",
         "#include <map_fragment>\n#ifdef USE_MAP\n" +
+        "  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), uGhost);\n" +
         "  float curlShade = uShade * (1.0 - smoothstep(0.0, 0.85, vMapUv.x));\n" +
         "  diffuseColor.rgb *= 1.0 - curlShade;\n#endif");
   };
@@ -159,13 +163,14 @@ export class WebglRenderer {
   }
 
   /** Build the two faces of the sheet in flight. */
-  makeSheet(frontCanvas, backCanvas) {
+  makeSheet(frontCanvas, backCanvas, single) {
     this.destroySheet();
     const build = (canvas, back) => {
       const geometry = new THREE.PlaneGeometry(this.pageW, this.pageH, SEGMENTS, 1);
       geometry.translate(this.pageW / 2, 0, 0);       // hinge on the spine, at x = 0
       const uv = geometry.attributes.uv;
-      if (back) {
+      // A single page's back is the page seen through the paper, so it stays mirrored.
+      if (back && !single) {
         for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); // seen from behind
         uv.needsUpdate = true;
       }
@@ -177,7 +182,10 @@ export class WebglRenderer {
         texture.minFilter = THREE.LinearFilter;
         material.map = texture;
       }
+      if (back && single) material.userData.ghost.value = 0.72;
       const mesh = new THREE.Mesh(geometry, material);
+      // A single page is centred, so its hinge is its own left edge rather than the spine.
+      if (single) mesh.position.x = -this.pageW / 2;
       mesh.userData.base = Float32Array.from(geometry.attributes.position.array);
       this.scene.add(mesh);
       return mesh;
@@ -400,7 +408,7 @@ export class WebglRenderer {
    * @returns {Promise<{frames: number, ms: number}>}
    */
   animateTurn(spec) {
-    this.makeSheet(spec.front, spec.back);
+    this.makeSheet(spec.front, spec.back, spec.single);
     const from = spec.backwards ? 1 : 0;
     const to = spec.backwards ? 0 : 1;
     this.spec = spec;
@@ -409,7 +417,7 @@ export class WebglRenderer {
 
   /** Build the sheet and hold it at `progress`, for a drag that will move it by hand. */
   beginTurn(spec, progress) {
-    this.makeSheet(spec.front, spec.back);
+    this.makeSheet(spec.front, spec.back, spec.single);
     this.spec = spec;
     this.updateTurn(progress || 0);
   }

@@ -5,3 +5,5 @@ This directory contains Zaya's MIT-licensed engine and its PDF.js and three.js
 runtime assets. Each vendor directory includes its upstream license.
 Local changes add sliced File input, single-page motion, an `onTapAt` hook for tap zones,
 and `keepZoom` / `zoomToTop` / `fitWidthLevel` for reading a magnified page on a phone.
+Later local changes: `turnStyle` (curl / slide / none) with a single-page curl hinged on the page's left edge
+(its back a faint mirror, in both renderers), and `maxPixelRatio` for a battery-saving render density.

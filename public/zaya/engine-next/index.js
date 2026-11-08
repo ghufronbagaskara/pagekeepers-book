@@ -31,6 +31,10 @@ const DEFAULTS = {
   openPage: 1,
   hard: "none",
   duration: 480,
+  /** Local change: "curl" (a sheet turns, also for a single page), "slide", or "none". */
+  turnStyle: "curl",
+  /** Local change: the device pixel ratio pages are rendered for at most; lower saves battery. */
+  maxPixelRatio: 2,
   paddingTop: 0,
   paddingBottom: 0,
   backgroundColor: "#20232a",
@@ -306,7 +310,7 @@ export class ZayaBook {
    */
   scaleFor() {
     const across = this.pageMode === "single" ? 1 : 2;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.options.maxPixelRatio || 2);
     const byWidth = (Math.max(1, this.stage.clientWidth) / across) * dpr / Math.max(1, this.baseWidth);
     const byHeight = Math.max(1, this.stage.clientHeight) * dpr / Math.max(1, this.baseHeight);
     const scale = Math.min(byWidth, byHeight) * Math.max(1, this.zoomLevel);
@@ -425,18 +429,21 @@ export class ZayaBook {
       const step = this.pageMode === "single" ? 1 : 2;
       const adjacent =
         Math.abs(this.layout.spreadFor(to)[0] - this.layout.spreadFor(from)[0]) === step;
-      const animate = opts.animate !== false && adjacent && !prefersReducedMotion();
-      if (animate && this.pageMode === "double") await this.animateTo(from, to, token);
+      const style = this.options.turnStyle;
+      const animate = opts.animate !== false && adjacent && style !== "none" && !prefersReducedMotion();
+      // Local change: a curl turns a sheet in both page modes; a slide carries the new page in from the side.
+      if (animate && style !== "slide") await this.animateTo(from, to, token);
       this.activePage = to;
       await this.paintSpread();
       if (this.turnToken !== token || this.disposed) return;
       if (keep) this.zoomToTop(keep);
-      if (animate && this.pageMode === "single") {
-        const shift = to > from ? 18 : -18;
+      if (animate && style === "slide") {
+        this.sound.play();
+        const forward = (to > from) !== (this.direction === "rtl");
         this.stage.animate([
-          { transform: `translateX(${shift}px)`, opacity: 0.35 },
-          { transform: "translateX(0)", opacity: 1 },
-        ], { duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+          { transform: `translateX(${forward ? 100 : -100}%)` },
+          { transform: "translateX(0)" },
+        ], { duration: Math.max(120, (this.options.duration || 0) * 0.75), easing: "cubic-bezier(0.22, 1, 0.36, 1)" });
       }
       this.announce();
     } finally {
@@ -460,9 +467,11 @@ export class ZayaBook {
     let frontPage, backPage, staticLeft, staticRight;
 
     if (single) {
-      frontPage = from;
-      backPage = to;
-      staticLeft = to;
+      // Local change: the page being left lifts off from its left edge, its back a faint mirror of
+      // itself, as in Apple Books; going back, the earlier page comes down over this one.
+      frontPage = backwards ? to : from;
+      backPage = frontPage;
+      staticLeft = backwards ? from : to;
       staticRight = 0;
     } else {
       frontPage = sheet * 2 - 1;                 // the recto of the sheet in flight
@@ -491,6 +500,7 @@ export class ZayaBook {
       side,
       hard: this.layout.isHardSheet(sheet),
       backwards,
+      single,
       duration: Math.max(0, this.options.duration || 0),
     };
   }
@@ -544,7 +554,7 @@ export class ZayaBook {
     const target = forward ? this.layout.nextPage(this.activePage) : this.layout.prevPage(this.activePage);
     if (!target) return false;
     if (this.zoomed) return false;
-    if (this.pageMode === "single") {
+    if (this.options.turnStyle !== "curl") {
       this.dragTurn = { target, singleSwipe: true };
       return true;
     }

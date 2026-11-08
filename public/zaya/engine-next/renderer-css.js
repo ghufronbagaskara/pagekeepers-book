@@ -193,9 +193,17 @@ export class CssRenderer {
 
   /* ---- the sheet in flight ------------------------------------------------------------------ */
 
-  makeSheet(frontCanvas, backCanvas, side) {
+  makeSheet(frontCanvas, backCanvas, side, single) {
     this.destroySheet();
-    const sheet = element("zn-sheet");
+    const sheet = element(single ? "zn-sheet zn-single" : "zn-sheet");
+    // Local change: a single page shows itself on both faces, and a canvas can only be in one place.
+    if (backCanvas && backCanvas === frontCanvas) {
+      const copy = document.createElement("canvas");
+      copy.width = frontCanvas.width;
+      copy.height = frontCanvas.height;
+      copy.getContext("2d").drawImage(frontCanvas, 0, 0);
+      backCanvas = copy;
+    }
     const front = element("zn-face zn-face-front");
     const back = element("zn-face zn-face-back");
     CssRenderer.fill(front, frontCanvas);
@@ -237,7 +245,7 @@ export class CssRenderer {
 
   /** Build the sheet and hold it at `progress`, for a drag that will move it by hand. */
   beginTurn(spec, progress) {
-    this.makeSheet(spec.front, spec.back, spec.side);
+    this.makeSheet(spec.front, spec.back, spec.side, spec.single);
     this.applyTurn(progress || 0);
   }
 
@@ -256,7 +264,7 @@ export class CssRenderer {
 
   /** @returns {Promise<{frames:number, ms:number}>} */
   animateTurn(spec) {
-    this.makeSheet(spec.front, spec.back, spec.side);
+    this.makeSheet(spec.front, spec.back, spec.side, spec.single);
     const from = spec.backwards ? 1 : 0;
     const to = spec.backwards ? 0 : 1;
     this.applyTurn(from);

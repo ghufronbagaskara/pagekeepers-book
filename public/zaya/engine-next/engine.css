@@ -89,6 +89,15 @@
   transform: rotateY(180deg);
 }
 
+/* Local change: the back of a single turning page is the page seen through the paper. */
+.zn-single .zn-face-back {
+  transform: rotateY(180deg) scaleX(-1);
+}
+
+.zn-single .zn-face-back .zn-canvas {
+  opacity: 0.28;
+}
+
 /* The document failed to open; the host application shows the message. */
 .zn-failed .zn-stage {
   cursor: default;
