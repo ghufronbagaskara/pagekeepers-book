@@ -1,6 +1,7 @@
 import type { ReadingClock } from "./sessions";
 import { todayMs } from "./sessions";
 import { duration, goalMinutes } from "./stats";
+import { t } from "./i18n";
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id)! as T;
 const clockFace = (ms: number) => {
@@ -9,7 +10,7 @@ const clockFace = (ms: number) => {
 };
 
 /** A countdown over time the book is on screen: it pauses when the reader switches away. */
-export function setupTimer(clock: ReadingClock, uid: string, page: () => number, leave: () => void) {
+export function setupTimer(clock: ReadingClock, uid: string, hash: string, page: () => number, leave: () => void) {
   const button = element<HTMLButtonElement>("timer");
   const pill = element("timer-pill");
   const setup = element<HTMLDialogElement>("timer-dialog");
@@ -18,6 +19,14 @@ export function setupTimer(clock: ReadingClock, uid: string, page: () => number,
   let run: { endAt: number; length: number; fromPage: number } | undefined;
   let audio: AudioContext | undefined;
   let wake: WakeLockSentinel | undefined;
+  // A running timer survives a reload or a trip to the library: what is left is kept, not the clock time.
+  const stored = `reader-timer/${uid}`;
+  const keep = () => {
+    try {
+      if (!run) localStorage.removeItem(stored);
+      else localStorage.setItem(stored, JSON.stringify({ left: run.endAt - clock.visibleMs, length: run.length, fromPage: run.fromPage, hash, at: Date.now() }));
+    } catch {}
+  };
 
   const holdScreen = async () => {
     if (!run || document.hidden || wake) return;
@@ -29,13 +38,14 @@ export function setupTimer(clock: ReadingClock, uid: string, page: () => number,
   const render = () => {
     pill.hidden = !run;
     button.setAttribute("aria-pressed", String(Boolean(run)));
-    const label = run ? `Timer membaca, sisa ${clockFace(run.endAt - clock.visibleMs)}` : "Timer membaca";
+    const label = run ? t("Reading timer, {time} left", { time: clockFace(run.endAt - clock.visibleMs) }) : t("Reading timer");
     button.setAttribute("aria-label", label);
     button.title = label;
     if (run) pill.textContent = clockFace(run.endAt - clock.visibleMs);
+    keep();
   };
-  const start = (length: number) => {
-    run = { endAt: clock.visibleMs + length, length, fromPage: page() };
+  const start = (length: number, left = length, fromPage = page()) => {
+    run = { endAt: clock.visibleMs + left, length, fromPage };
     clock.touch();
     void holdScreen();
     render();
@@ -69,10 +79,10 @@ export function setupTimer(clock: ReadingClock, uid: string, page: () => number,
     const today = await todayMs(uid);
     const goal = goalMinutes(uid);
     const to = page();
-    const pages = to === finished.fromPage ? `di halaman ${to}` : `dari halaman ${finished.fromPage} sampai ${to}`;
-    const progress = today >= goal * 60000 ? `Target hari ini (${goal} menit) tercapai, total ${duration(today)}.` :
-      `Hari ini: ${duration(today)} dari target ${goal} menit.`;
-    element("timer-done-message").textContent = `Anda sudah membaca ${duration(finished.length)}, ${pages}. ${progress}`;
+    const pages = to === finished.fromPage ? t("on page {page}", { page: to }) : t("from page {from} to {to}", { from: finished.fromPage, to });
+    const progress = today >= goal * 60000 ? t("You reached today's {goal} min goal with {time}.", { goal, time: duration(today) }) :
+      t("Today: {time} of your {goal} min goal.", { time: duration(today), goal });
+    element("timer-done-message").textContent = t("You read for {time}, {pages}. {progress}", { time: duration(finished.length), pages, progress });
     done.returnValue = "";
     done.showModal();
   };
@@ -102,5 +112,17 @@ export function setupTimer(clock: ReadingClock, uid: string, page: () => number,
     if (done.returnValue === "extend") start(5 * 60000);
     else if (done.returnValue === "library") leave();
   });
+  try {
+    const saved = JSON.parse(localStorage.getItem(stored) ?? "null");
+    // ponytail: a timer left alone for 30 minutes is treated as abandoned, like a reading session.
+    if (saved && saved.left > 0 && saved.length > 0 && Date.now() - saved.at < 30 * 60000) {
+      audio = window.AudioContext ? new AudioContext() : undefined;
+      // Browsers keep sound blocked until the reader touches the page again.
+      const unlock = () => void audio?.resume().catch(() => {});
+      for (const name of ["pointerdown", "keydown"]) addEventListener(name, unlock, { once: true });
+      start(saved.length, Math.min(saved.left, saved.length), saved.hash === hash ? saved.fromPage : page());
+    }
+  } catch {}
   render();
+  return () => button.click();
 }

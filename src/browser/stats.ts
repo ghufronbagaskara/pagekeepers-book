@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+
 export type Timed = { startedAt: number; activeMs: number };
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -31,7 +33,7 @@ export function streak(days: Map<string, number>, goalMs: number, now = Date.now
 }
 export function duration(ms: number) {
   const minutes = Math.floor(ms / 60000);
-  return minutes < 60 ? `${minutes} menit` : `${Math.floor(minutes / 60)} jam ${minutes % 60} menit`;
+  return minutes < 60 ? t("{minutes} min", { minutes }) : t("{hours} h {minutes} min", { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
 }
 const goalKey = (uid: string) => `reading-goal/${uid}`;
 export const goalMinutes = (uid: string) => Number(localStorage.getItem(goalKey(uid))) || 15;

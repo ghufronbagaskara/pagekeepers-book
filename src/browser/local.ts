@@ -1,3 +1,5 @@
+import { locale } from "./i18n";
+
 export type Grant = { uid: string; expiresAt: number };
 export type Book = { hash: string; title: string; bytes: number; pages?: number; path?: string; personal?: boolean; cover?: Blob };
 export type Progress = { page: number; revision: number; mutation?: string; lastReadAt?: number; visitPending?: number };
@@ -96,5 +98,5 @@ export async function deleteFile(uid: string, path: string) {
   }
 }
 export function humanBytes(bytes: number) {
-  return `${new Intl.NumberFormat("id", { maximumFractionDigits: 1 }).format(bytes / 1048576)} MB`;
+  return `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(bytes / 1048576)} MB`;
 }

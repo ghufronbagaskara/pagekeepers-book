@@ -17,6 +17,6 @@ test("streak counts goal days in a row and an unfinished today does not break it
   days.set(dayKey(today), 20 * minute);
   expect(streak(days, 15 * minute, now)).toBe(3);
   expect(streak(new Map(), 15 * minute, now)).toBe(0);
-  expect(duration(59 * minute + 59000)).toBe("59 menit");
-  expect(duration(80 * minute)).toBe("1 jam 20 menit");
+  expect(duration(59 * minute + 59000)).toBe("59 min");
+  expect(duration(80 * minute)).toBe("1 h 20 min");
 });

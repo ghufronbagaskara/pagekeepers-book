@@ -24,7 +24,7 @@ self.onmessage = async ({ data }: MessageEvent<Job | "cancel">) => {
     if (!stream) {
       const response = await fetch(`/api/pdf/${hash}/`, { signal: controller.signal });
       if (response.status === 401) throw new Error("SESSION");
-      if (!response.ok || !response.body) throw new Error("Unduhan gagal. Coba lagi.");
+      if (!response.ok || !response.body) throw new Error("The download failed. Try again.");
       stream = response.body;
     }
     const reader = stream.getReader();
@@ -39,11 +39,11 @@ self.onmessage = async ({ data }: MessageEvent<Job | "cancel">) => {
         controller.signal.throwIfAborted();
         const { done, value } = await reader.read();
         if (done) break;
-        if (offset + value.length > bytes) throw new Error("Ukuran PDF tidak sesuai dengan data di rak.");
+        if (offset + value.length > bytes) throw new Error("The PDF size does not match the library record.");
         if (magic.length < 5) magic += new TextDecoder().decode(value.subarray(0, 5 - magic.length));
         digest.update(value);
         const written = writer.write(value as Uint8Array<ArrayBuffer>, { at: offset });
-        if (written !== value.length) throw new Error("Ruang penyimpanan di perangkat ini tidak cukup.");
+        if (written !== value.length) throw new Error("There is not enough space on this device.");
         offset += written;
         if (offset - reported >= 512 * 1024) {
           reported = offset;
@@ -57,8 +57,8 @@ self.onmessage = async ({ data }: MessageEvent<Job | "cancel">) => {
     }
     controller.signal.throwIfAborted();
     const actual = bytesToHex(digest.digest());
-    if (offset !== bytes || (hash && actual !== hash)) throw new Error("Unduhan tidak lengkap atau rusak. Coba lagi.");
-    if (magic !== "%PDF-") throw new Error("File ini sepertinya bukan PDF yang valid.");
+    if (offset !== bytes || (hash && actual !== hash)) throw new Error("The download is incomplete or damaged. Try again.");
+    if (magic !== "%PDF-") throw new Error("This file does not appear to be a valid PDF.");
     writer.flush();
     writer.close();
     writer = undefined;
@@ -67,8 +67,8 @@ self.onmessage = async ({ data }: MessageEvent<Job | "cancel">) => {
   } catch (error) {
     writer?.close();
     if (!kept && directory) await directory.removeEntry(temp).catch(() => {});
-    self.postMessage({ error: controller.signal.aborted ? "Unduhan dibatalkan." :
-      error instanceof DOMException && error.name === "QuotaExceededError" ? "Ruang penyimpanan di perangkat ini tidak cukup." :
-      error instanceof Error ? error.message : "Buku tidak dapat disimpan di perangkat ini." });
+    self.postMessage({ error: controller.signal.aborted ? "Download canceled." :
+      error instanceof DOMException && error.name === "QuotaExceededError" ? "There is not enough space on this device." :
+      error instanceof Error ? error.message : "The book could not be saved on this device." });
   }
 };

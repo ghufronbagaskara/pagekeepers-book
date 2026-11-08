@@ -1,4 +1,8 @@
 import { cacheShell, remember } from "./local";
+import { t, translatePage, wireLangToggle } from "./i18n";
+
+translatePage();
+wireLangToggle(document.getElementById("lang") as HTMLButtonElement);
 
 void cacheShell()?.catch(() => {});
 const form = document.querySelector<HTMLFormElement>("form")!;
@@ -15,11 +19,11 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({ email: data.get("email"), password: data.get("password") }),
     });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error ?? "Gagal masuk. Coba lagi.");
+    if (!response.ok) throw new Error(payload.error ?? "Sign-in failed. Try again.");
     remember(payload);
     location.replace("/library/");
   } catch (error) {
-    status.textContent = navigator.onLine && error instanceof Error ? error.message : "Sambungkan ke internet untuk masuk.";
+    status.textContent = t(navigator.onLine && error instanceof Error ? error.message : "Connect to the internet to sign in.");
   } finally {
     submit.disabled = false;
   }
