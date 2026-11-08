@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
 import { Database } from "bun:sqlite";
+import { readdir } from "node:fs/promises";
 import { hashPassword } from "better-auth/crypto";
 import { api, type ReaderEnv } from "./api";
 
@@ -141,7 +142,7 @@ test("D1 sign-in keeps existing progress, issues a fixed session, and honors exp
 
 async function fixture(production = false) {
   const db = new Database(":memory:");
-  for (const migration of ["0001_reader.sql", "0002_reading_history.sql", "0003_better_auth.sql", "0004_sessions_bookmarks.sql"]) {
+  for (const migration of (await readdir("migrations")).filter((name) => name.endsWith(".sql")).sort()) {
     db.run(await Bun.file("migrations/" + migration).text());
   }
   db.run("INSERT INTO books(hash,title,bytes,pages) VALUES (?, 'Sample', 5, 100)", [sample]);
@@ -183,4 +184,57 @@ async function signIn(call: Awaited<ReturnType<typeof fixture>>["call"]) {
   expect(cookie).toContain("Max-Age=604800; HttpOnly; Secure; SameSite=Lax");
   const { expiresAt } = await response.json() as { expiresAt: number };
   return { token: cookie.split(";")[0], expiresAt };
+}
+
+test("admin API is for admins only, manages accounts, guards the acting admin, and keeps an audit trail", async () => {
+  const { call, db } = await fixture();
+  const { token } = await signIn(call);
+  const session = await (await call("session", "GET", undefined, token)).json() as { uid: string; role: string };
+  expect(session.role).toBe("admin");
+
+  const reader = { email: " New.Reader@Example.test ", name: "New reader", password: "correct horse battery", role: "user" };
+  expect((await call("admin/users", "POST", { ...reader, password: "short" }, token)).status).toBe(400);
+  const created = await call("admin/users", "POST", reader, token);
+  expect(created.status).toBe(201);
+  const user = await created.json() as { uid: string; email: string; role: string; active: number };
+  expect(user).toMatchObject({ email: "new.reader@example.test", role: "user", active: 1 });
+  expect((await call("admin/users", "POST", reader, token)).status).toBe(409);
+
+  // A plain user gets nothing from the admin API.
+  db.run("INSERT INTO sessions(token_hash, uid, expires_at) VALUES (?, ?, ?)",
+    [await sha256("c".repeat(64)), user.uid, Date.now() + 60_000]);
+  const userToken = `__Host-reader=${"c".repeat(64)}`;
+  expect((await call("session", "GET", undefined, userToken)).status).toBe(200);
+  expect((await call("admin/users", "GET", undefined, userToken)).status).toBe(403);
+  expect((await call(`admin/users/${session.uid}`, "PATCH", { active: false }, userToken)).status).toBe(403);
+
+  expect((await call(`admin/users/${session.uid}`, "PATCH", { active: false }, token)).status).toBe(400);
+  expect((await call(`admin/users/${session.uid}`, "PATCH", { role: "user" }, token)).status).toBe(400);
+  expect((await call(`admin/users/${user.uid}`, "PATCH", { active: "no" }, token)).status).toBe(400);
+  expect(await (await call(`admin/users/${user.uid}`, "PATCH", { active: false }, token)).json()).toMatchObject({ active: 0, sessions: 0 });
+  expect((await call("session", "GET", undefined, userToken)).status).toBe(401);
+  expect(await (await call(`admin/users/${user.uid}`, "PATCH", { active: true, role: "admin" }, token)).json()).toMatchObject({ active: 1, role: "admin" });
+  expect((await call(`admin/users/${user.uid}/password`, "PUT", { password: "another long password" }, token)).status).toBe(200);
+  expect((await call(`admin/users/${user.uid}/revoke`, "POST", {}, token)).status).toBe(200);
+
+  db.run("INSERT INTO progress(uid, hash, page, revision, mutation) VALUES (?, ?, 3, 1, '')", [user.uid, sample]);
+  expect((await call(`admin/users/${user.uid}`, "DELETE", { confirm: "someone@else.test" }, token)).status).toBe(400);
+  expect((await call(`admin/users/${user.uid}`, "DELETE", { confirm: "NEW.reader@example.test" }, token)).status).toBe(200);
+  expect(db.query("SELECT COUNT(*) AS n FROM progress WHERE uid = ?").get(user.uid)).toEqual({ n: 0 });
+  expect(db.query("SELECT COUNT(*) AS n FROM auth_user WHERE id = ?").get(user.uid)).toEqual({ n: 0 });
+  expect((await call(`admin/users/${user.uid}`, "PATCH", { active: true }, token)).status).toBe(404);
+
+  const overview = await (await call("admin/overview", "GET", undefined, token)).json() as { users: { total: number; admins: number }; books: number };
+  expect(overview).toMatchObject({ users: { total: 1, admins: 1 }, books: 1 });
+  const log = await (await call("admin/audit?kind=user", "GET", undefined, token)).json() as { entries: { action: string }[]; more: boolean };
+  expect(log.entries.map((entry) => entry.action)).toEqual(
+    ["user.delete", "user.revoke", "user.password", "user.role", "user.enable", "user.disable", "user.create"]);
+  expect(log.more).toBe(false);
+  const logins = await (await call("admin/audit?kind=login", "GET", undefined, token)).json() as { entries: { action: string }[] };
+  expect(logins.entries.map((entry) => entry.action)).toEqual(["login.success"]);
+  db.close();
+});
+
+async function sha256(text: string) {
+  return Buffer.from(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text))).toString("hex");
 }

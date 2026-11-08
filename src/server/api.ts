@@ -1,5 +1,7 @@
 import type { D1Database, R2Bucket } from "@cloudflare/workers-types";
 import { createAuth, sessionLifetime as lifetime } from "./auth";
+import { admin, audit, type Role } from "./admin";
+import { body, fail, json, noStore } from "./http";
 
 export type ReaderEnv = {
   DB: D1Database;
@@ -11,10 +13,6 @@ export type ReaderEnv = {
 
 const cookieName = "__Host-reader";
 const hashPattern = /^[a-f0-9]{64}$/;
-const noStore = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
-const json = (data: unknown, status = 200, headers?: Record<string, string>) =>
-  Response.json(data, { status, headers: { ...noStore, ...headers } });
-const fail = (status: number, error: string) => json({ error }, status);
 const cookie = (token: string, age: number) =>
   `${cookieName}=${token}; Path=/; Max-Age=${age}; HttpOnly; Secure; SameSite=Lax`;
 const tokenFrom = (request: Request) =>
@@ -27,38 +25,13 @@ const isPreview = (request: Request, env: ReaderEnv) =>
 const authFor = (request: Request, env: ReaderEnv) => env.BETTER_AUTH_SECRET
   ? createAuth(env.DB, env.BETTER_AUTH_SECRET, new URL(request.url).origin)
   : undefined;
-const activeAccount = (env: ReaderEnv, uid: string) =>
-  env.DB.prepare("SELECT active FROM accounts WHERE uid = ?").bind(uid).first<number>("active");
+const account = (env: ReaderEnv, uid: string) =>
+  env.DB.prepare("SELECT active, role FROM accounts WHERE uid = ?").bind(uid).first<{ active: number; role: Role }>();
 function withCookies(data: unknown, response: Response, clearPreview = false) {
   const result = json(data);
   for (const value of response.headers.getSetCookie()) result.headers.append("Set-Cookie", value);
   if (clearPreview) result.headers.append("Set-Cookie", cookie("", 0));
   return result;
-}
-
-async function body(request: Request): Promise<Record<string, unknown> | null> {
-  if (!request.body || !request.headers.get("Content-Type")?.startsWith("application/json")) return null;
-  const reader = request.body.getReader();
-  const data = new Uint8Array(4096);
-  let offset = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (offset + value.length > data.length) {
-        await reader.cancel();
-        return null;
-      }
-      data.set(value, offset);
-      offset += value.length;
-    }
-    const parsed: unknown = JSON.parse(new TextDecoder().decode(data.subarray(0, offset)));
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
-  } catch {
-    return null;
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 async function login(request: Request, env: ReaderEnv) {
@@ -80,23 +53,29 @@ async function login(request: Request, env: ReaderEnv) {
     });
     if (response.status === 429) return fail(429, "Too many attempts. Try again in a minute.");
     if (response.status >= 500) return fail(503, "Sign-in is temporarily unavailable. Try again shortly.");
-    if (!response.ok) return fail(401, "Check your email and password, then try again.");
+    if (!response.ok) {
+      await audit(env, request, { uid: null, email }, "login.failure");
+      return fail(401, "Check your email and password, then try again.");
+    }
     const { user, token } = await response.json() as { user: { id: string }; token: string };
     const uid = user.id;
-    if (await activeAccount(env, uid) !== 1) {
+    if ((await account(env, uid))?.active !== 1) {
       await env.DB.prepare("DELETE FROM auth_session WHERE token = ? AND userId = ?").bind(token, uid).run();
+      await audit(env, request, { uid, email }, "login.blocked");
       return fail(401, "This account is inactive.");
     }
     const session = await env.DB.prepare("SELECT expiresAt FROM auth_session WHERE token = ? AND userId = ?")
       .bind(token, uid).first<string>("expiresAt");
     const expiresAt = session ? Date.parse(session) : NaN;
     if (!Number.isFinite(expiresAt)) return fail(503, "Sign-in is temporarily unavailable. Try again shortly.");
+    await audit(env, request, { uid, email }, "login.success");
     return withCookies({ uid, expiresAt }, response, local);
   }
 
+  // The loopback preview reader is an admin so the admin page can be tried locally.
   const uid = "local-reader";
-  await env.DB.prepare("INSERT INTO accounts(uid) VALUES (?) ON CONFLICT DO NOTHING").bind(uid).run();
-  if (await activeAccount(env, uid) !== 1) return fail(401, "This account is inactive.");
+  await env.DB.prepare("INSERT INTO accounts(uid, role) VALUES (?, 'admin') ON CONFLICT(uid) DO UPDATE SET role = 'admin'").bind(uid).run();
+  if ((await account(env, uid))?.active !== 1) return fail(401, "This account is inactive.");
 
   const token = hex(crypto.getRandomValues(new Uint8Array(32)));
   const expiresAt = Date.now() + lifetime * 1000;
@@ -107,6 +86,7 @@ async function login(request: Request, env: ReaderEnv) {
   ];
   if (previous) operations.push(env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(await digest(previous)));
   await env.DB.batch(operations);
+  await audit(env, request, { uid, email }, "login.success");
   return json({ uid, expiresAt }, 200, { "Set-Cookie": cookie(token, lifetime) });
 }
 
@@ -167,7 +147,16 @@ async function route(request: Request, path: string, env: ReaderEnv) {
   const token = local ? tokenFrom(request) : undefined;
   const tokenHash = token && await digest(token);
   const auth = authFor(request, env);
+  const previewSession = tokenHash && await env.DB.prepare(
+    "SELECT s.uid, s.expires_at AS expiresAt, a.role FROM sessions s JOIN accounts a ON a.uid = s.uid WHERE s.token_hash = ? AND s.expires_at > ? AND a.active = 1",
+  ).bind(tokenHash, Date.now()).first<{ uid: string; expiresAt: number; role: Role }>();
+  const authenticated = !previewSession && auth && await auth.api.getSession({ headers: request.headers });
+  const owner = authenticated ? await account(env, authenticated.user.id) : null;
+  const session = previewSession || (authenticated && owner?.active === 1
+    ? { uid: authenticated.user.id, expiresAt: new Date(authenticated.session.expiresAt).getTime(), role: owner.role }
+    : null);
   if (path === "logout" && method === "POST") {
+    if (session) await audit(env, request, { uid: session.uid, email: authenticated ? authenticated.user.email : null }, "logout");
     if (tokenHash) await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash).run();
     if (auth) {
       const response = await auth.api.signOut({ headers: request.headers, asResponse: true });
@@ -176,15 +165,9 @@ async function route(request: Request, path: string, env: ReaderEnv) {
     }
     return json({}, 200, { "Set-Cookie": cookie("", 0) });
   }
-  const previewSession = tokenHash && await env.DB.prepare(
-    "SELECT s.uid, s.expires_at AS expiresAt FROM sessions s JOIN accounts a ON a.uid = s.uid WHERE s.token_hash = ? AND s.expires_at > ? AND a.active = 1",
-  ).bind(tokenHash, Date.now()).first<{ uid: string; expiresAt: number }>();
-  const authenticated = !previewSession && auth && await auth.api.getSession({ headers: request.headers });
-  const session = previewSession || (authenticated && await activeAccount(env, authenticated.user.id) === 1
-    ? { uid: authenticated.user.id, expiresAt: new Date(authenticated.session.expiresAt).getTime() }
-    : null);
   if (!session) return fail(401, "Sign in again to continue.");
   if (path === "session" && method === "GET") return json(session);
+  if (path.startsWith("admin/")) return admin(request, path.slice(6), env, session);
   if (path === "catalog" && method === "GET") {
     return json((await env.DB.prepare("SELECT b.hash, b.title, b.bytes, b.pages, p.page FROM books b LEFT JOIN progress p ON p.hash = b.hash AND p.uid = ? ORDER BY b.title COLLATE NOCASE").bind(session.uid).all()).results);
   }

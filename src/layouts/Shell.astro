@@ -3,13 +3,22 @@ import { brand } from "../brand";
 const { title, page = "" } = Astro.props;
 ---
 <!doctype html>
-<html lang="id">
+<html lang="id" data-theme={page === "reader-page" ? "dark" : undefined}>
 <head>
   <meta charset="utf-8" />
-  <script is:inline>try { if (JSON.parse(localStorage.getItem("reader-settings") || "{}").large) document.documentElement.classList.add("large-ui"); } catch {}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#1b1a17" />
+  <script is:inline>(function () {
+    var root = document.documentElement;
+    try { if (JSON.parse(localStorage.getItem("reader-settings") || "{}").large) root.classList.add("large-ui"); } catch {}
+    if (root.dataset.theme) return;
+    var theme;
+    try { theme = localStorage.getItem("reader-theme"); } catch {}
+    if (theme !== "light" && theme !== "dark") theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    root.dataset.theme = theme;
+    if (theme === "light") document.querySelector('meta[name="theme-color"]').setAttribute("content", "#efe5d3");
+  })();</script>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

@@ -1,8 +1,10 @@
 import { cacheShell, remember } from "./local";
 import { t, translatePage, wireLangToggle } from "./i18n";
+import { wireThemeToggle } from "./theme";
 
 translatePage();
 wireLangToggle(document.getElementById("lang") as HTMLButtonElement);
+wireThemeToggle(document.getElementById("theme") as HTMLButtonElement);
 
 void cacheShell()?.catch(() => {});
 const form = document.querySelector<HTMLFormElement>("form")!;

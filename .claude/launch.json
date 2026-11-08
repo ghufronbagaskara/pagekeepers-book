@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "preview", "runtimeExecutable": "bun", "runtimeArgs": ["run", "preview"], "port": 4321, "url": "http://127.0.0.1:4321" }
+  ]
+}

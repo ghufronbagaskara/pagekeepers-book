@@ -1,0 +1,98 @@
+---
+import Shell from "../layouts/Shell.astro";
+import ThemeToggle from "../layouts/ThemeToggle.astro";
+import { brand } from "../brand";
+export const prerender = true;
+---
+<Shell title="Admin" page="library-page admin-page">
+  <header class="masthead">
+    <a class="wordmark" href="/library/"><img src="/icon.svg" width="35" height="35" alt="" /><span>{brand}</span></a>
+    <div class="masthead-actions">
+      <a class="logout-button" href="/library/">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13" /></svg>
+        <span class="logout-text">Library</span>
+      </a>
+      <ThemeToggle />
+      <button id="lang" class="logout-button lang-toggle" type="button"><span data-lang="en">EN</span><span aria-hidden="true">/</span><span data-lang="id">ID</span></button>
+    </div>
+  </header>
+  <main class="shelf admin">
+    <div class="shelf-head">
+      <div><p class="eyebrow shelf-label">Admin</p><h1>Dashboard</h1><p class="muted">Manage readers and see what happened on the site.</p></div>
+    </div>
+    <div class="admin-tabs" role="tablist" aria-label="Admin sections">
+      <button type="button" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
+      <button type="button" role="tab" id="tab-users" aria-controls="panel-users" aria-selected="false" tabindex="-1">Users</button>
+      <button type="button" role="tab" id="tab-audit" aria-controls="panel-audit" aria-selected="false" tabindex="-1">Audit log</button>
+    </div>
+    <p id="status" role="status" class="notice">Loading…</p>
+
+    <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+      <dl class="admin-stats">
+        <div><dt>Users</dt><dd id="stat-users">–</dd></div>
+        <div><dt>Active</dt><dd id="stat-active">–</dd></div>
+        <div><dt>Admins</dt><dd id="stat-admins">–</dd></div>
+        <div><dt>Books</dt><dd id="stat-books">–</dd></div>
+        <div><dt>Minutes read, last 7 days</dt><dd id="stat-minutes">–</dd></div>
+      </dl>
+      <h2 class="admin-heading">Recent activity</h2>
+      <div class="table-wrap"><table class="admin-table"><thead><tr><th>Time</th><th>Event</th><th>By</th><th>Details</th></tr></thead><tbody id="recent"></tbody></table></div>
+    </section>
+
+    <section id="panel-users" role="tabpanel" aria-labelledby="tab-users" hidden>
+      <div class="admin-toolbar"><h2 class="admin-heading">Users</h2><button id="add-user" class="primary" type="button">Add user</button></div>
+      <div class="table-wrap"><table class="admin-table">
+        <thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Last read</th><th>Created</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody id="users"></tbody>
+      </table></div>
+    </section>
+
+    <section id="panel-audit" role="tabpanel" aria-labelledby="tab-audit" hidden>
+      <div class="admin-toolbar">
+        <h2 class="admin-heading">Audit log</h2>
+        <label><span class="visually-hidden">Show</span><select id="audit-kind">
+          <option value="">All events</option><option value="login">Sign-ins</option><option value="user">Account changes</option>
+        </select></label>
+      </div>
+      <div class="table-wrap"><table class="admin-table"><thead><tr><th>Time</th><th>Event</th><th>By</th><th>Details</th><th>IP</th></tr></thead><tbody id="audit"></tbody></table></div>
+      <p class="admin-more"><button id="audit-more" type="button" hidden>Load more</button></p>
+    </section>
+  </main>
+
+  <dialog id="add-dialog" aria-labelledby="add-title">
+    <form id="add-form" method="dialog">
+      <h2 id="add-title">Add user</h2>
+      <label>Email <input name="email" type="email" required maxlength="254" autocomplete="off" /></label>
+      <label>Name <input name="name" maxlength="100" autocomplete="off" placeholder="Optional" /></label>
+      <label>Password <input name="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password" /></label>
+      <label>Role <select name="role"><option value="user">User</option><option value="admin">Admin</option></select></label>
+      <p class="muted">Share the password with the reader yourself. They sign in with it right away.</p>
+      <p class="notice" role="status"></p>
+      <div class="dialog-actions"><button value="cancel" formnovalidate>Cancel</button><button value="save" class="primary">Create account</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="manage-dialog" aria-labelledby="manage-title">
+    <h2 id="manage-title"></h2>
+    <p id="manage-meta" class="muted"></p>
+    <p id="manage-status" class="notice" role="status"></p>
+    <div class="dialog-actions">
+      <button id="toggle-active" type="button"></button>
+      <button id="toggle-role" type="button"></button>
+      <button id="revoke" type="button">End all sessions</button>
+    </div>
+    <form id="password-form" class="admin-form">
+      <h3>Reset password</h3>
+      <label>New password <input name="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password" /></label>
+      <button type="submit">Set password</button>
+    </form>
+    <form id="delete-form" class="admin-form admin-danger">
+      <h3>Delete account</h3>
+      <p class="muted">This removes the account, its reading progress, bookmarks and reading history. It cannot be undone.</p>
+      <label><span id="delete-label"></span> <input name="confirm" required autocomplete="off" /></label>
+      <button type="submit" class="danger">Delete permanently</button>
+    </form>
+    <div class="dialog-actions"><button id="manage-close" type="button" class="primary">Done</button></div>
+  </dialog>
+  <script is:inline type="module" src="/client/admin.js"></script>
+</Shell>

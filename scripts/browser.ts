@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 
 await mkdir("public/client", { recursive: true });
 const result = await Bun.build({
-  entrypoints: ["login", "library", "reader", "storage-worker"].map((name) => `src/browser/${name}.ts`),
+  entrypoints: ["login", "library", "reader", "admin", "storage-worker"].map((name) => `src/browser/${name}.ts`),
   target: "browser", outdir: "public/client", minify: true, format: "esm",
 });
 if (!result.success) throw new AggregateError(result.logs, "Failed to build browser modules");

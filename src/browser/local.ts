@@ -1,6 +1,6 @@
 import { locale } from "./i18n";
 
-export type Grant = { uid: string; expiresAt: number };
+export type Grant = { uid: string; expiresAt: number; role?: "user" | "admin" };
 export type Book = { hash: string; title: string; bytes: number; pages?: number; path?: string; personal?: boolean; cover?: Blob };
 export type Progress = { page: number; revision: number; mutation?: string; lastReadAt?: number; visitPending?: number };
 const grantKey = "reader-session";

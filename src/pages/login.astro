@@ -1,6 +1,7 @@
 ---
 import Shell from "../layouts/Shell.astro";
 import { brand } from "../brand";
+import ThemeToggle from "../layouts/ThemeToggle.astro";
 export const prerender = true;
 ---
 <Shell title="Sign in" page="login-page">
@@ -15,7 +16,7 @@ export const prerender = true;
       </div>
     </div>
     <section class="login-card" aria-labelledby="login-title">
-      <button id="lang" class="logout-button lang-toggle login-lang" type="button"><span data-lang="en">EN</span><span aria-hidden="true">/</span><span data-lang="id">ID</span></button>
+      <div class="login-switches"><ThemeToggle /><button id="lang" class="logout-button lang-toggle login-lang" type="button"><span data-lang="en">EN</span><span aria-hidden="true">/</span><span data-lang="id">ID</span></button></div>
       <h1 id="login-title">Welcome back</h1>
       <p class="muted">Sign in to return to your library.</p>
       <form>

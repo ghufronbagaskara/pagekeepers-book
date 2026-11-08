@@ -39,6 +39,10 @@ if (action === "create" && value) {
     await rmdir(directory);
   }
   console.log(`Created reader account: ${uid}`);
+} else if (action === "role" && value && ["admin", "user"].includes(process.argv[5] ?? "")) {
+  // Accepts an email or an account ID, so the first admin can be promoted right after `create`.
+  const who = sql(value.toLowerCase().includes("@") ? value.toLowerCase() : value);
+  execute(stage, `UPDATE accounts SET role=${sql(process.argv[5]!)} WHERE uid=${who} OR uid IN (SELECT id FROM auth_user WHERE email=${who});`);
 } else if (value && validId(value) && ["disable", "enable", "revoke"].includes(action ?? "")) {
   const id = sql(value);
   const statements = [];
@@ -46,5 +50,5 @@ if (action === "create" && value) {
   if (action !== "enable") statements.push(`DELETE FROM auth_session WHERE userId=${id};`, `DELETE FROM sessions WHERE uid=${id};`);
   execute(stage, statements.join("\n"));
 } else {
-  throw new Error("Usage: bun run account <local|staging|prod> create <email> [existing-account-id], or <disable|enable|revoke> <account-id>");
+  throw new Error("Usage: bun run account <local|staging|prod> create <email> [existing-account-id], or <disable|enable|revoke> <account-id>, or role <email|account-id> <admin|user>");
 }

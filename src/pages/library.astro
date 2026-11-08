@@ -1,12 +1,18 @@
 ---
 import Shell from "../layouts/Shell.astro";
 import { brand } from "../brand";
+import ThemeToggle from "../layouts/ThemeToggle.astro";
 export const prerender = true;
 ---
 <Shell title="Your library" page="library-page">
   <header class="masthead">
     <a class="wordmark" href="/library/"><img src="/icon.svg" width="35" height="35" alt="" /><span>{brand}</span></a>
     <div class="masthead-actions">
+      <a id="admin-link" class="logout-button" href="/admin/" hidden>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" /></svg>
+        <span class="logout-text">Admin</span>
+      </a>
+      <ThemeToggle />
       <button id="lang" class="logout-button lang-toggle" type="button"><span data-lang="en">EN</span><span aria-hidden="true">/</span><span data-lang="id">ID</span></button>
       <button id="large-ui" class="logout-button" type="button" aria-pressed="false" title="Larger text and buttons"><span aria-hidden="true" class="large-icon">A<span>A</span></span> <span class="large-text">Large text</span></button>
       <button id="logout" class="logout-button" type="button">

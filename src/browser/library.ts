@@ -4,9 +4,11 @@ import { byDay, dayKey, daysBack, duration, goalMinutes, setGoalMinutes, streak 
 import { wireLargeToggle } from "./settings";
 import { locale, t, translatePage, wireLangToggle } from "./i18n";
 import { setupInstall } from "./install";
+import { wireThemeToggle } from "./theme";
 
 translatePage();
 wireLangToggle(document.getElementById("lang") as HTMLButtonElement);
+wireThemeToggle(document.getElementById("theme") as HTMLButtonElement);
 
 wireLargeToggle(document.getElementById("large-ui") as HTMLButtonElement);
 setupInstall();
@@ -19,6 +21,7 @@ const picker = element<HTMLInputElement>("file");
 const shelf = element("books");
 const grant = await session();
 watchSession(grant);
+document.getElementById("admin-link")!.hidden = grant.role !== "admin";
 let busy = false;
 let controller: Worker | undefined;
 let objectUrls: string[] = [];

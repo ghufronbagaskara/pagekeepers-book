@@ -55,7 +55,7 @@ try {
 bun run catalog staging 'book/Pasta Kacang Merah.pdf' 'book/Bandung Menjelang Pagi.pdf'
 ```
 
-Use a fresh password of 12 to 128 characters. The account command prints an account ID. There is no public sign-up form or admin page. Sign-in uses [Better Auth with the D1 binding](https://better-auth.com/docs/concepts/database) and sessions last seven days from sign-in.
+Use a fresh password of 12 to 128 characters. The account command prints an account ID. There is no public sign-up form. Admins manage accounts at `/admin/`. Sign-in uses [Better Auth with the D1 binding](https://better-auth.com/docs/concepts/database) and sessions last seven days from sign-in.
 
 4. Sign in on staging. Check that downloading, offline reading, and progress sync work on your devices. Check for Cloudflare error 1102 during sign-in. Password verification must fit the [Workers Free CPU limit](https://developers.cloudflare.com/workers/platform/limits/), which local preview does not enforce. Once staging passes, deploy production, create its account, and publish the full catalog.
 
@@ -83,6 +83,14 @@ bun run account prod disable ACCOUNT_ID
 bun run account prod enable ACCOUNT_ID
 bun run account prod revoke ACCOUNT_ID
 ```
+
+To make an account an admin (or a regular user again), pass its email or account ID:
+
+```powershell
+bun run account prod role ghufronbagaskara08@gmail.com admin
+```
+
+Migration `0005_admin.sql` already promotes `ghufronbagaskara08@gmail.com` if that account existed when it ran. Admins see an **Admin** link in the library header. The admin page creates, disables, deletes and resets accounts, changes roles, ends sessions, and shows the audit log of sign-ins and admin actions. Audit entries are kept for 180 days.
 
 `disable` blocks access and revokes sessions. `enable` allows sign-in again. `revoke` ends active sessions without disabling the account. A device that is fully offline can continue using its last valid local session until it reconnects or the session expires.
 
