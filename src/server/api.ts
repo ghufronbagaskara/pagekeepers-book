@@ -64,39 +64,39 @@ async function body(request: Request): Promise<Record<string, unknown> | null> {
 async function login(request: Request, env: ReaderEnv) {
   const ip = request.headers.get("CF-Connecting-IP") ?? "local";
   if (env.AUTH_THROTTLE && !(await env.AUTH_THROTTLE.limit({ key: ip })).success) {
-    return fail(429, "Terlalu banyak percobaan. Coba lagi dalam satu menit.");
+    return fail(429, "Too many attempts. Try again in a minute.");
   }
   const input = await body(request);
   const email = typeof input?.email === "string" ? input.email.trim().toLowerCase() : "";
   const password = typeof input?.password === "string" ? input.password : "";
-  if (!email || email.length > 254 || !password || password.length > 128) return fail(400, "Masukkan email dan kata sandi.");
+  if (!email || email.length > 254 || !password || password.length > 128) return fail(400, "Enter your email and password.");
 
   const local = isPreview(request, env);
   if (!(local && email === "reader@example.test" && password === "local-preview-only")) {
     const auth = authFor(request, env);
-    if (!auth) return fail(503, "Layanan masuk sedang tidak tersedia. Coba lagi sebentar lagi.");
+    if (!auth) return fail(503, "Sign-in is temporarily unavailable. Try again shortly.");
     const response = await auth.api.signInEmail({
       body: { email, password }, headers: request.headers, asResponse: true,
     });
-    if (response.status === 429) return fail(429, "Terlalu banyak percobaan. Coba lagi dalam satu menit.");
-    if (response.status >= 500) return fail(503, "Layanan masuk sedang tidak tersedia. Coba lagi sebentar lagi.");
-    if (!response.ok) return fail(401, "Email atau kata sandi salah. Periksa lalu coba lagi.");
+    if (response.status === 429) return fail(429, "Too many attempts. Try again in a minute.");
+    if (response.status >= 500) return fail(503, "Sign-in is temporarily unavailable. Try again shortly.");
+    if (!response.ok) return fail(401, "Check your email and password, then try again.");
     const { user, token } = await response.json() as { user: { id: string }; token: string };
     const uid = user.id;
     if (await activeAccount(env, uid) !== 1) {
       await env.DB.prepare("DELETE FROM auth_session WHERE token = ? AND userId = ?").bind(token, uid).run();
-      return fail(401, "Akun ini tidak aktif.");
+      return fail(401, "This account is inactive.");
     }
     const session = await env.DB.prepare("SELECT expiresAt FROM auth_session WHERE token = ? AND userId = ?")
       .bind(token, uid).first<string>("expiresAt");
     const expiresAt = session ? Date.parse(session) : NaN;
-    if (!Number.isFinite(expiresAt)) return fail(503, "Layanan masuk sedang tidak tersedia. Coba lagi sebentar lagi.");
+    if (!Number.isFinite(expiresAt)) return fail(503, "Sign-in is temporarily unavailable. Try again shortly.");
     return withCookies({ uid, expiresAt }, response, local);
   }
 
   const uid = "local-reader";
   await env.DB.prepare("INSERT INTO accounts(uid) VALUES (?) ON CONFLICT DO NOTHING").bind(uid).run();
-  if (await activeAccount(env, uid) !== 1) return fail(401, "Akun ini tidak aktif.");
+  if (await activeAccount(env, uid) !== 1) return fail(401, "This account is inactive.");
 
   const token = hex(crypto.getRandomValues(new Uint8Array(32)));
   const expiresAt = Date.now() + lifetime * 1000;
