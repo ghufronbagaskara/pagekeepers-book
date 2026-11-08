@@ -1,0 +1,261 @@
+/**
+ * Two languages without a library: the pages and code are written in English, and this dictionary
+ * maps each English string (or template, with {names}) to Indonesian. A string missing here shows in English.
+ */
+export type Lang = "en" | "id";
+const key = "reader-lang";
+
+export function lang(): Lang {
+  try { return localStorage.getItem(key) === "id" ? "id" : "en"; } catch { return "en"; }
+}
+export const locale = () => lang() === "id" ? "id" : "en";
+
+const id: Record<string, string> = {
+  // Library
+  "Your library": "Rak buku",
+  "Sign out": "Keluar",
+  "Large text": "Teks besar",
+  "Private collection": "Koleksi pribadi",
+  "Pick up where you left off or open something new.": "Lanjutkan bacaan terakhir atau buka buku baru.",
+  "Import PDF": "Impor PDF",
+  "Loading your library…": "Memuat rak buku…",
+  "Download progress": "Kemajuan unduhan",
+  "Cancel": "Batal",
+  "Continue reading": "Lanjut membaca",
+  "Reading habit": "Kebiasaan membaca",
+  "Today's reading goal": "Target membaca hari ini",
+  "Change daily goal": "Ubah target harian",
+  "Minutes a day": "Menit per hari",
+  "Save": "Simpan",
+  "Reading in the last five weeks": "Riwayat membaca lima minggu terakhir",
+  "Recently read": "Baru dibaca",
+  "All books": "Semua buku",
+  "{count} books": "{count} buku",
+  "{count} book": "{count} buku",
+  "Your library is empty. Import a PDF to get started.": "Rak Anda masih kosong. Impor PDF untuk mulai.",
+  "of {goal} today": "dari {goal} hari ini",
+  "{days}-day streak.": "{days} hari berturut-turut.",
+  "{days}-day streak. Read today to keep it going.": "{days} hari berturut-turut. Baca hari ini supaya tidak terputus.",
+  "Meet your goal today to start a streak.": "Capai target hari ini untuk memulai rangkaian hari membaca.",
+  "Last 7 days: {time}": "7 hari terakhir: {time}",
+  "MTWTFSS": "SSRKJSM",
+  "Saved on this device": "Tersimpan di perangkat ini",
+  "Not downloaded": "Belum diunduh",
+  "Read {title}": "Baca {title}",
+  "Download and read {title}": "Unduh dan baca {title}",
+  "{page} / {pages} pages": "{page} / {pages} halaman",
+  "Reading progress for {title}": "Kemajuan membaca {title}",
+  "Page {page}": "Halaman {page}",
+  "Not started": "Belum dimulai",
+  "Download and continue": "Unduh dan lanjutkan",
+  "The saved copy is missing or damaged. Download or import the book again.": "Salinan yang tersimpan hilang atau rusak. Unduh atau impor ulang bukunya.",
+  "Remove download": "Hapus unduhan",
+  "Remove {title} from this device": "Hapus {title} dari perangkat ini",
+  "Remove the saved copy of {title} from this device?": "Hapus salinan {title} dari perangkat ini? Posisi baca Anda tetap tersimpan.",
+  "Download removed. Your place is still saved.": "Unduhan dihapus. Posisi baca Anda tetap tersimpan.",
+  "Something went wrong. Try again.": "Terjadi kesalahan. Coba lagi.",
+  "This browser does not support offline reading.": "Browser ini tidak mendukung membaca tanpa internet.",
+  "Offline reading is not ready yet.": "Mode tanpa internet belum siap.",
+  "Offline reading is not ready yet. Try again when online.": "Mode tanpa internet belum siap. Coba lagi saat tersambung.",
+  "The reader could not be prepared for offline use. Try again when online.": "Pembaca belum bisa disiapkan untuk dipakai tanpa internet. Coba lagi saat tersambung.",
+  "Getting the reader ready for offline use…": "Menyiapkan pembaca agar bisa dipakai tanpa internet…",
+  "This browser cannot save PDFs for offline reading.": "Browser ini tidak bisa menyimpan PDF untuk dibaca tanpa internet.",
+  "There is not enough space on this device.": "Ruang penyimpanan di perangkat ini tidak cukup.",
+  "The book could not be saved on this device.": "Buku tidak dapat disimpan di perangkat ini.",
+  "Sign-out failed. Try again.": "Gagal keluar. Coba lagi.",
+  "Connect to the internet to sign out.": "Sambungkan ke internet untuk keluar.",
+  "Offline. Your saved books are still available.": "Sedang tidak tersambung. Buku yang sudah diunduh tetap bisa dibaca.",
+  "The download failed. Try again.": "Unduhan gagal. Coba lagi.",
+  "The PDF size does not match the library record.": "Ukuran PDF tidak sesuai dengan data di rak.",
+  "The download is incomplete or damaged. Try again.": "Unduhan tidak lengkap atau rusak. Coba lagi.",
+  "This file does not appear to be a valid PDF.": "File ini sepertinya bukan PDF yang valid.",
+  "Download canceled.": "Unduhan dibatalkan.",
+  "Switch to Bahasa Indonesia": "Ganti ke Bahasa Indonesia",
+  // Sign in, including the server's messages
+  "Sign in": "Masuk",
+  "Private library": "Perpustakaan pribadi",
+  "One more": "Satu halaman",
+  "page.": "lagi.",
+  "A place for the books you love and the ones you’ll read next.": "Tempat untuk buku yang Anda sukai dan buku yang akan Anda baca berikutnya.",
+  "Welcome back": "Selamat datang kembali",
+  "Sign in to return to your library.": "Masuk untuk kembali ke rak buku Anda.",
+  "Password": "Kata sandi",
+  "Sign-in failed. Try again.": "Gagal masuk. Coba lagi.",
+  "Connect to the internet to sign in.": "Sambungkan ke internet untuk masuk.",
+  "Too many attempts. Try again in a minute.": "Terlalu banyak percobaan. Coba lagi dalam satu menit.",
+  "Enter your email and password.": "Masukkan email dan kata sandi.",
+  "Sign-in is temporarily unavailable. Try again shortly.": "Layanan masuk sedang tidak tersedia. Coba lagi sebentar lagi.",
+  "Check your email and password, then try again.": "Email atau kata sandi salah. Periksa lalu coba lagi.",
+  "This account is inactive.": "Akun ini tidak aktif.",
+  "This request must come from Pagekeepers.": "Permintaan ini harus berasal dari Pagekeepers.",
+  // Reader
+  "Read": "Membaca",
+  "Reader": "Membaca",
+  "‹ Library": "‹ Rak buku",
+  "Bookmarks and pages": "Penanda dan halaman",
+  "Bookmarks": "Penanda",
+  "Pages": "Halaman",
+  "Book pages": "Halaman buku",
+  "Opening book…": "Membuka buku…",
+  "Reading controls": "Kontrol membaca",
+  "Previous page": "Halaman sebelumnya",
+  "Back": "Mundur",
+  "Go to page": "Ke halaman",
+  "Next page": "Halaman berikutnya",
+  "Next": "Maju",
+  "List": "Daftar",
+  "Bookmark this page": "Tandai halaman ini",
+  "Mark": "Tandai",
+  "Zoom out": "Perkecil",
+  "Zoom in": "Perbesar",
+  "Smaller": "Kecil",
+  "Larger": "Besar",
+  "Reading timer": "Timer membaca",
+  "Full screen": "Layar penuh",
+  "Exit full screen": "Keluar dari layar penuh",
+  "Full": "Penuh",
+  "Reading options": "Pengaturan membaca",
+  "Settings": "Atur",
+  "Page layout": "Tata letak halaman",
+  "Automatic": "Otomatis",
+  "Single page": "Satu halaman",
+  "Two pages": "Dua halaman",
+  "Fit width": "Pas lebar",
+  "Original size": "Ukuran awal",
+  "Keep zoom when turning pages": "Pertahankan zoom saat ganti halaman",
+  "Page color": "Warna halaman",
+  "Warm": "Hangat",
+  "Night": "Malam",
+  "Page brightness": "Kecerahan halaman",
+  "Larger text and buttons": "Teks dan tombol besar",
+  "Language": "Bahasa",
+  "Show tips": "Lihat petunjuk",
+  "Download PDF": "Unduh PDF",
+  "How to read": "Cara membaca",
+  "Tap to go back": "Ketuk untuk mundur",
+  "Tap to show or hide the menu": "Ketuk untuk menampilkan atau menyembunyikan menu",
+  "Tap to go forward": "Ketuk untuk maju",
+  "Got it": "Mengerti",
+  "Where would you like to pick up?": "Mau lanjut dari halaman mana?",
+  "Use synced page": "Pakai halaman tersimpan",
+  "Use the page on this device": "Pakai halaman di perangkat ini",
+  "This device is on page {local}. Your synced position is page {cloud}.": "Perangkat ini ada di halaman {local}. Halaman yang tersimpan di akun Anda adalah halaman {cloud}.",
+  "Counts while this book is on screen and pauses when you switch away.": "Timer berjalan selama buku tampil di layar dan berhenti sementara saat Anda membuka aplikasi lain.",
+  "Quick start": "Mulai cepat",
+  "15 min": "15 menit",
+  "25 min": "25 menit",
+  "45 min": "45 menit",
+  "Minutes": "Menit",
+  "Stop timer": "Hentikan timer",
+  "Start": "Mulai",
+  "Time’s up": "Waktunya istirahat",
+  "Back to library": "Kembali ke rak",
+  "5 more minutes": "Tambah 5 menit",
+  "Keep reading": "Lanjut membaca",
+  "Bookmark": "Tandai",
+  "Edit bookmark": "Ubah penanda",
+  "Note (optional)": "Catatan (boleh dikosongkan)",
+  "Chapter 3, a line to remember…": "Bab 3, kalimat yang ingin diingat…",
+  "Remove bookmark": "Hapus penanda",
+  "Choose a book from your library.": "Pilih buku dari rak Anda.",
+  "Save this book to this device before opening it.": "Unduh buku ini ke perangkat sebelum membukanya.",
+  "The saved PDF is incomplete. Download or import it again.": "File PDF yang tersimpan tidak lengkap. Unduh atau impor ulang.",
+  "Your reading position could not be saved.": "Posisi baca tidak dapat disimpan.",
+  "This PDF could not be opened.": "PDF ini tidak dapat dibuka.",
+  "This book could not be opened.": "Buku ini tidak dapat dibuka.",
+  "Edit bookmark on page {page}": "Ubah penanda di halaman {page}",
+  "p. {page}": "hlm. {page}",
+  "page {page}": "halaman {page}",
+  "No bookmarks yet. Use the bookmark button to mark a page.": "Belum ada penanda. Ketuk tombol Tandai untuk menandai halaman.",
+  "The bookmark could not be saved.": "Penanda tidak dapat disimpan.",
+  "Reading timer, {time} left": "Timer membaca, sisa {time}",
+  "on page {page}": "di halaman {page}",
+  "from page {from} to {to}": "dari halaman {from} sampai {to}",
+  "You reached today's {goal} min goal with {time}.": "Target hari ini ({goal} menit) tercapai, total {time}.",
+  "Today: {time} of your {goal} min goal.": "Hari ini: {time} dari target {goal} menit.",
+  "You read for {time}, {pages}. {progress}": "Anda sudah membaca {time}, {pages}. {progress}",
+  "{minutes} min": "{minutes} menit",
+  "{hours} h {minutes} min": "{hours} jam {minutes} menit",
+  // Install banner
+  "Add Pagekeepers to your home screen": "Pasang Pagekeepers di layar utama",
+  "Install": "Pasang",
+  "Not now": "Nanti saja",
+  "Open your library like an app, straight from the home screen.": "Buka rak buku seperti aplikasi, langsung dari layar utama.",
+  "Tap the Share button, then “Add to Home Screen”, to open your library like an app.": "Ketuk tombol Bagikan, lalu “Tambahkan ke Layar Utama”, agar rak buku bisa dibuka seperti aplikasi.",
+  // Search, filter, sort
+  "Search by title": "Cari judul",
+  "Show": "Tampilkan",
+  "Sort by": "Urutkan",
+  "Reading": "Sedang dibaca",
+  "Finished": "Selesai",
+  "On this device": "Di perangkat ini",
+  "Title A–Z": "Judul A–Z",
+  "Most progress": "Paling jauh dibaca",
+  "No books match. Try another title or filter.": "Tidak ada buku yang cocok. Coba judul atau filter lain.",
+  // Habit calendar legend
+  "Calendar colors": "Arti warna kalender",
+  "Under 1 hour": "Di bawah 1 jam",
+  "1–2 hours": "1–2 jam",
+  "2 hours or more": "2 jam atau lebih",
+  // Quote
+  "Share a quote from this page": "Bagikan kutipan dari halaman ini",
+  "Drag across the part of the page you want to share.": "Geser jari di bagian halaman yang ingin dibagikan.",
+  "Share a quote": "Bagikan kutipan",
+  "The part of the page you chose": "Bagian halaman yang Anda pilih",
+  "Save image": "Simpan gambar",
+  "Share": "Bagikan",
+  "{title}, page {page}": "{title}, halaman {page}",
+  // Page turn and battery
+  "Page turn": "Animasi balik halaman",
+  "Curl": "Lengkung",
+  "Slide": "Geser",
+  "None": "Tanpa",
+  "Turn speed": "Kecepatan balik",
+  "Fast": "Cepat",
+  "Slow": "Lambat",
+  "Page-turn sound": "Suara balik halaman",
+  "Battery saver: simpler page drawing (reopens the book)": "Hemat baterai: tampilan halaman lebih ringan (buku dibuka ulang)",
+  "With a keyboard: ← → turn pages, B bookmark, T timer, F full screen, ? these tips.": "Dengan keyboard: ← → ganti halaman, B penanda, T timer, F layar penuh, ? petunjuk ini.",
+};
+
+/** English text, or its Indonesian translation, with {names} filled in. */
+export function t(text: string, vars: Record<string, string | number> = {}) {
+  const base = lang() === "id" ? id[text] ?? text : text;
+  return base.replace(/\{(\w+)\}/g, (match, name) => name in vars ? String(vars[name]) : match);
+}
+
+/**
+ * Translate the page as written: text nodes and labels that match an entry exactly, and elements
+ * whose sentences carry markup through `data-id-html`.
+ */
+export function translatePage() {
+  document.documentElement.lang = lang();
+  if (lang() !== "id") return;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.nodeValue?.trim();
+    if (text && id[text]) node.nodeValue = node.nodeValue!.replace(text, id[text]);
+  }
+  for (const element of document.querySelectorAll<HTMLElement>("[aria-label], [title], [placeholder]")) {
+    for (const name of ["aria-label", "title", "placeholder"]) {
+      const value = element.getAttribute(name);
+      if (value && id[value]) element.setAttribute(name, id[value]);
+    }
+  }
+  for (const element of document.querySelectorAll<HTMLElement>("[data-id-html]")) element.innerHTML = element.dataset.idHtml!;
+  const [name, ...rest] = document.title.split(" · ");
+  if (name && id[name]) document.title = [id[name], ...rest].join(" · ");
+}
+
+/** Changing language reloads the page, so every string is written once, in one place. */
+export function setLang(next: Lang) {
+  try { localStorage.setItem(key, next); } catch {}
+  location.reload();
+}
+/** The EN / ID switch. Its label names the other language in that language, so either reader can find it. */
+export function wireLangToggle(button: HTMLButtonElement) {
+  const current = lang();
+  button.dataset.lang = current;
+  button.setAttribute("aria-label", current === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia");
+  button.addEventListener("click", () => setLang(current === "id" ? "en" : "id"));
+}
