@@ -3,24 +3,25 @@ import Shell from "../layouts/Shell.astro";
 import { brand } from "../brand";
 export const prerender = true;
 ---
-<Shell title="Masuk" page="login-page">
+<Shell title="Sign in" page="login-page">
   <main class="login-layout">
     <div class="login-intro">
       <div class="wordmark"><img src="/icon.svg" width="37" height="37" alt="" /><span>{brand}</span></div>
-      <p class="eyebrow">Perpustakaan pribadi</p>
-      <p class="login-tagline">Satu halaman <br />lagi.</p>
-      <p class="login-intro-copy">Tempat untuk buku yang Anda sukai dan buku yang akan Anda baca berikutnya.</p>
+      <p class="eyebrow">Private library</p>
+      <p class="login-tagline">One more <br />page.</p>
+      <p class="login-intro-copy">A place for the books you love and the ones you’ll read next.</p>
       <div class="login-illustration" aria-hidden="true">
         <div class="login-volume"><img src="/icon.svg" width="56" height="56" alt="" /></div>
       </div>
     </div>
     <section class="login-card" aria-labelledby="login-title">
-      <h1 id="login-title">Selamat datang kembali</h1>
-      <p class="muted">Masuk untuk kembali ke rak buku Anda.</p>
+      <button id="lang" class="logout-button lang-toggle login-lang" type="button"><span data-lang="en">EN</span><span aria-hidden="true">/</span><span data-lang="id">ID</span></button>
+      <h1 id="login-title">Welcome back</h1>
+      <p class="muted">Sign in to return to your library.</p>
       <form>
         <label>Email <input name="email" type="email" autocomplete="username" required maxlength="254" /></label>
-        <label>Kata sandi <input name="password" type="password" autocomplete="current-password" required maxlength="128" /></label>
-        <button class="primary">Masuk <span aria-hidden="true">→</span></button>
+        <label>Password <input name="password" type="password" autocomplete="current-password" required maxlength="128" /></label>
+        <button class="primary">Sign in <span aria-hidden="true">→</span></button>
         <p id="status" role="status" class="notice"></p>
       </form>
     </section>
