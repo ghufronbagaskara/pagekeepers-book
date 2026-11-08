@@ -520,3 +520,58 @@ html.large-ui { font-size: 19px; }
   .reader-options { position: static; }
   .reader-options-panel { left: 0; right: 0; width: auto; }
 }
+
+/* The masthead stays at the top while the shelf scrolls under it. */
+.masthead { position: sticky; top: 0; z-index: 20; background: #211e19; box-shadow: 0 .4rem 1.2rem #0006; }
+.lang-toggle { gap: .3rem; letter-spacing: .04em; }
+.lang-toggle [data-lang] { opacity: .55; }
+.lang-toggle[data-lang="en"] [data-lang="en"], .lang-toggle[data-lang="id"] [data-lang="id"] { opacity: 1; color: var(--accent); }
+.login-card .login-lang { display: flex; width: max-content; min-width: 0; margin: 0 0 1.2rem auto; }
+@media (max-width: 420px) {
+  .masthead-actions { gap: .35rem; }
+  .masthead-actions .logout-text { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
+}
+
+/* Habit calendar: three levels by hours read, brightest glows. */
+.habit-calendar .level-3, .habit-legend .level-3 { box-shadow: 0 0 .55rem #e4b76f80; }
+.habit-legend { display: flex; flex-wrap: wrap; gap: .3rem .9rem; margin: 0 0 .55rem; padding: 0; list-style: none; color: var(--muted); font-size: .78rem; }
+.habit-legend li { display: flex; align-items: center; gap: .35rem; }
+.habit-legend i { width: .8rem; height: .8rem; border-radius: .2rem; }
+.habit-legend .level-1 { background: #5a4630; }
+.habit-legend .level-2 { background: #8a6a3e; }
+.habit-legend .level-3 { background: #e4b76f; }
+.large-ui .habit-legend { font-size: 1rem; }
+
+/* Library search, filter and sort. */
+.shelf-tools { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1rem; }
+.shelf-tools .shelf-search { flex: 1 1 14rem; }
+.shelf-tools input, .shelf-tools select { width: 100%; min-height: 2.75rem; }
+.shelf-tools label:not(.shelf-search) { flex: 1 1 9rem; }
+#no-match { margin: 0 0 1rem; }
+
+/* Install banner. */
+.install-banner { display: flex; align-items: center; gap: .85rem; margin: 0 0 1.2rem; padding: .8rem .9rem; border: 1px solid var(--shelf-line); border-radius: .7rem; background: #221e18; }
+.install-banner[hidden] { display: none; }
+.install-banner img { flex: none; border-radius: .6rem; }
+.install-banner > div:first-of-type { flex: 1; min-width: 0; }
+.install-banner p { margin: .2rem 0 0; font-size: .85rem; }
+.install-actions { display: flex; align-items: center; gap: .4rem; }
+#install-close { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; background: none; border-color: transparent; }
+#install-close svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+@media (max-width: 560px) {
+  .install-banner { flex-wrap: wrap; gap: .6rem .75rem; }
+  .install-banner > div:first-of-type { flex: 1 1 calc(100% - 4rem); }
+  .install-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* Quote: drag a box over the page, then share it. */
+.quote-layer { position: fixed; z-index: 30; touch-action: none; cursor: crosshair; background: #0003; }
+.quote-layer[hidden] { display: none; }
+.quote-help { position: absolute; inset: .6rem .6rem auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem .8rem; margin: 0; padding: .55rem .8rem; border-radius: .6rem; background: #191a1bee; color: #f4efe6; font-size: .95rem; text-align: center; cursor: default; }
+.quote-box { position: absolute; border: 2px solid #e4b76f; border-radius: .2rem; background: #e4b76f22; box-shadow: 0 0 0 100vmax #0006; pointer-events: none; }
+.quote-box[hidden] { display: none; }
+.quote-preview { display: block; max-width: 100%; max-height: 55dvh; margin: 0 auto 1rem; border-radius: .3rem; object-fit: contain; }
+.reader-options-panel .option-primary { border-color: #8a6a3e; }
+
+/* Keyboard shortcuts mean nothing on a touch screen. */
+@media (hover: none) { .hint-keys { display: none; } }
